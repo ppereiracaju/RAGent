@@ -1,0 +1,14 @@
+requests==2.31.0
+anthropic
+langchain
+langchain-community
+langchain-core
+langchain-chroma
+chromadb
+sentence-transformers
+pypdf==3.17.4
+pydantic>=2.0.0,<3.0.0
+pydantic-core>=2.0.0,<3.0.0 
+tavily-python
+langchain-huggingface
+python-dotenv
