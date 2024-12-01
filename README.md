@@ -1,31 +1,58 @@
-# The king RAGent
-## Trying to imitate an associative human thought process
+# The King RAGent
 
-This project implements a sophisticated RAG (Retrieval-Augmented Generation) system that mimics human-like information processing by combining local knowledge with web search capabilities.
+The King RAGent is an AI-powered research assistant that leverages vector databases and external APIs to provide comprehensive answers to user queries. This application is built using Streamlit for the frontend and integrates various backend services for document processing and information retrieval.
 
-### Features
+## Features
 
-- **PDF Knowledge Base**: Processes and stores PDF documents in a vector database for efficient retrieval
-- **Intelligent Search**: Uses ChromaDB for semantic search of relevant information
-- **Web Integration**: Leverages Tavily API for real-time web searches when needed
-- **Confidence Assessment**: Uses Claude AI to evaluate response confidence
-- **Information Synthesis**: Combines local knowledge with web search results
+- **PDF Upload and Processing**: Upload PDF documents to initialize the vector store.
+- **AI-Powered Query Handling**: Use AI models to process and respond to user queries.
+- **Web Search Integration**: Augment responses with web search results for enhanced accuracy.
+- **Dry Run Mode**: Test the application without making actual API calls or database operations.
 
-### Architecture
+## Installation
 
-The system follows a multi-step process:
-1. Initial query processing through local knowledge base
-2. Confidence assessment of the initial response
-3. Web search integration when needed
-4. Information synthesis and validation
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/ragents.git
+   cd ragents
+   ```
 
-### Requirements
+2. Install the required packages:
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-- Python 3.8+
-- ChromaDB for vector storage
-- Claude API access
-- Tavily API access
+3. Set up environment variables:
+   - Create a `.env` file in the root directory.
+   - Add your API keys and other necessary configurations.
 
-### Installation
+## Usage
 
-1. Clone the repository: 
+1. Run the Streamlit app:
+   ```bash
+   streamlit run streamlit_app.py
+   ```
+
+2. Open your browser and navigate to the local URL provided by Streamlit.
+
+## Dry Run Mode
+
+The application now supports a `dry_run` mode, which allows you to test the app without making actual API calls or database operations. This is useful for development and testing purposes.
+
+### How to Enable Dry Run Mode
+
+- **Streamlit Interface**: Use the "🔧 Dry Run Mode" checkbox in the sidebar to toggle dry run mode on or off.
+- **Backend Logic**: The `dry_run` parameter is propagated through the application, affecting the following components:
+  - **VectorStore**: Skips database loading and returns mock data.
+  - **call_claude_rag**: Returns a mock response instead of calling the Claude API.
+  - **assess_confidence**: Returns a mock confidence level.
+  - **synthesize_information**: Returns a mock synthesis of information.
+  - **call_tavily_web_search**: Returns mock search results.
+
+## Contributing
+
+Contributions are welcome! Please fork the repository and submit a pull request for any improvements or bug fixes.
+
+## License
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.

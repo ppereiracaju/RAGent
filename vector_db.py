@@ -10,87 +10,98 @@ from langchain_chroma import Chroma
 from langchain_community.document_loaders import PyPDFLoader
 from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.embeddings import HuggingFaceEmbeddings
+import chromadb
 
 # Set up logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class VectorStore:
-    def __init__(self, model_name="all-MiniLM-L6-v2", persist_directory="./chroma_db"):
+    def __init__(self, model_name="all-MiniLM-L6-v2", persist_directory="./chroma_db", dry_run=False):
         """Initialize the vector store with the specified embedding model."""
-        logging.debug(f"Initializing VectorStore with model: {model_name}")
+        self.dry_run = dry_run
+        logging.debug(f"[__init__] Initializing VectorStore with model: {model_name}, dry_run: {self.dry_run}")
         self.embedding_function = HuggingFaceEmbeddings(model_name=model_name)
         self.persist_directory = persist_directory
         
-        # Try to load existing DB
-        if os.path.exists(persist_directory):
-            try:
-                self.db = Chroma(
-                    persist_directory=persist_directory,
-                    embedding_function=self.embedding_function
-                )
-                logging.info("Loaded existing vector store from disk")
-            except Exception as e:
-                logging.error(f"Error loading existing vector store: {e}")
+        if not self.dry_run:
+            # Try to load existing DB
+            if os.path.exists(persist_directory):
+                try:
+                    self.db = Chroma(
+                        persist_directory=persist_directory,
+                        embedding_function=self.embedding_function,
+                        client_settings=chromadb.config.Settings(
+                            anonymized_telemetry=False,
+                            is_persistent=True
+                        )
+                    )
+                    logging.info("[__init__] Loaded existing vector store from disk")
+                except Exception as e:
+                    logging.error(f"[__init__] Error loading existing vector store: {e}")
+                    self.db = None
+            else:
                 self.db = None
         else:
             self.db = None
+            logging.info("[__init__] Dry run mode - skipping DB load")
 
     def initialize_from_pdf(self, pdf_path, chunk_size=300, chunk_overlap=50):
         """Initialize vector DB with PDF content."""
-        logging.debug(f"Loading PDF: {pdf_path}")
+        if self.dry_run:
+            logging.info(f"[initialize_from_pdf] Dry run mode - skipping PDF initialization for {pdf_path}")
+            return True
+
+        logging.debug(f"[initialize_from_pdf] Loading PDF: {pdf_path}")
         try:
-            # Load the PDF
             loader = PyPDFLoader(pdf_path)
             documents = loader.load()
-            logging.debug(f"Loaded {len(documents)} pages from PDF")
+            logging.debug(f"[initialize_from_pdf] Loaded {len(documents)} pages from PDF")
 
-            # Split documents into chunks
             text_splitter = CharacterTextSplitter(
                 chunk_size=chunk_size,
                 chunk_overlap=chunk_overlap,
                 separator="\n"
             )
             docs = text_splitter.split_documents(documents)
-            logging.debug(f"Split into {len(docs)} chunks")
+            logging.debug(f"[initialize_from_pdf] Split into {len(docs)} chunks")
 
-            # Create vector store
             self.db = Chroma.from_documents(
                 documents=docs,
                 embedding=self.embedding_function,
-                persist_directory="./chroma_db"  # Persist the database to disk
+                persist_directory=self.persist_directory,
+                client_settings=chromadb.config.Settings(
+                    anonymized_telemetry=False,
+                    is_persistent=True
+                )
             )
-            logging.debug("Vector store initialized successfully")
+            logging.debug("[initialize_from_pdf] Vector store initialized successfully")
             return True
 
         except Exception as e:
-            logging.error(f"Error initializing vector store: {e}")
+            logging.error(f"[initialize_from_pdf] Error initializing vector store: {e}")
             return False
 
     def search(self, query, n_results=3):
         """Search the vector store for relevant documents."""
-        logging.debug(f"Searching for: {query}")
+        if self.dry_run:
+            logging.info(f"[search] Dry run mode - returning mock results for query: {query}")
+            return "Mock result: This is a dry run response."
+
+        logging.debug(f"[search] Searching for: {query}")
         try:
             if not self.db:
-                logging.error("Vector store not initialized")
+                logging.error("[search] Vector store not initialized")
                 return ""
 
-            # Perform similarity search
             docs = self.db.similarity_search(query, k=n_results)
-            
-            # Combine the content from all retrieved documents
             context = "\n".join(doc.page_content for doc in docs)
-            logging.debug(f"Found {len(docs)} relevant documents")
+            logging.debug(f"[search] Found {len(docs)} relevant documents")
             return context
 
         except Exception as e:
-            logging.error(f"Error searching vector store: {e}")
+            logging.error(f"[search] Error searching vector store: {e}")
             return ""
 
     def __del__(self):
         """Cleanup when the object is destroyed."""
-        if self.db:
-            try:
-                self.db.persist()
-                logging.debug("Vector store persisted to disk")
-            except Exception as e:
-                logging.error(f"Error persisting vector store: {e}")
+        logging.debug("[__del__] Vector store cleanup complete")

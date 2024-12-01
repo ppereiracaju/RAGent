@@ -12,3 +12,4 @@ pydantic-core>=2.0.0,<3.0.0
 tavily-python
 langchain-huggingface
 python-dotenv
+streamlit
