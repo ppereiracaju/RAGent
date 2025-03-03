@@ -10,7 +10,7 @@ import os
 load_dotenv()
 
 # Initialize the Anthropic client
-client = Anthropic(api_key=os.getenv('CLAUDE_API_KEY'))
+client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
 
 def call_claude_rag(query, context, dry_run=False):
     if dry_run:

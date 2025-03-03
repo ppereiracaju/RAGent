@@ -4,6 +4,9 @@ from utils import call_claude_rag, call_tavily_web_search, assess_confidence, sy
 import logging
 
 def main(user_query, initialize=False, pdf_path=None, dry_run=False):  # Added dry_run parameter
+    if user_query is None:
+        logging.error("[main] user_query is None")
+        return "Error: user_query is None"
     logging.debug(f"[main] Starting process with query: {user_query[:100]}...")
     if dry_run:
         logging.info("[main] Running in dry run mode")
